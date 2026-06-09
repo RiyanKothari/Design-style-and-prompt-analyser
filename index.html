@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Design Style & Prompt Analyzer</title>
+  <!-- Google Fonts: Outfit (UI/Typography) & JetBrains Mono (Code/Prompts) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Lucide Icons for premium styling -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="app-header">
+    <div class="header-container">
+      <div class="logo-area">
+        <svg class="logo-svg" width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="2" y="2" width="24" height="24" rx="6" fill="url(#logo-grad)" stroke="rgba(255,255,255,0.15)" stroke-width="1.5"/>
+          <circle cx="14" cy="14" r="5" stroke="white" stroke-width="2"/>
+          <circle cx="14" cy="14" r="1.5" fill="white"/>
+          <path d="M14 5V7M14 21V23M5 14H7M21 14H23" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+          <defs>
+            <linearGradient id="logo-grad" x1="2" y1="2" x2="26" y2="26" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#C8A84B"/>
+              <stop offset="1" stop-color="#C4522A"/>
+            </linearGradient>
+          </defs>
+        </svg>
+        <h1>Visual<span>Prompt</span></h1>
+      </div>
+      <p class="header-tagline">Deconstruct visual design into AI prompts</p>
+      <div class="app-mode-badge">
+        <i data-lucide="zap" class="active-pulse"></i>
+        <span>Local Engine Active</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Container -->
+  <main class="app-container">
+    <div class="grid-layout">
+      
+      <!-- Left Column: Input, Upload, Demos & Image Widget Controls -->
+      <section class="input-panel">
+        
+        <!-- Reference Card -->
+        <div class="card panel-card">
+          <div class="card-header">
+            <i data-lucide="image"></i>
+            <h2>Design Reference</h2>
+          </div>
+          
+          <!-- Upload Dropzone -->
+          <div id="dropzone" class="upload-dropzone">
+            <div class="upload-prompt">
+              <i data-lucide="upload-cloud" class="upload-icon"></i>
+              <p class="primary-text">Drag & drop your reference design image</p>
+              <p class="secondary-text">or <span class="highlight">browse your files</span></p>
+              <p class="format-text">Supports PNG, JPG, WEBP</p>
+            </div>
+            <input type="file" id="file-input" accept="image/*" class="file-hidden">
+          </div>
+
+          <!-- Preview Area & Grid Widget (Hidden by default) -->
+          <div id="preview-container" class="preview-container hidden">
+            <div class="preview-header">
+              <h3>Loaded Reference</h3>
+              <div class="preview-controls">
+                <button id="toggle-grid-btn" class="widget-btn" title="Toggle Grid Overlay">
+                  <i data-lucide="grid"></i> Layout Grid
+                </button>
+                <button id="remove-img-btn" class="text-btn text-danger">
+                  <i data-lucide="trash-2"></i> Remove
+                </button>
+              </div>
+            </div>
+            
+            <div class="image-wrapper-outer">
+              <div class="image-wrapper">
+                <img id="image-preview" src="" alt="Reference Preview">
+                <!-- Layout Grid Overlay (Fluid Widget) -->
+                <div id="grid-overlay" class="grid-overlay hidden">
+                  <div class="grid-lines"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Try Demos Section -->
+          <div class="demo-section">
+            <h3>No reference? Try a quick demo preset</h3>
+            <div class="demo-buttons">
+              <button class="demo-btn" data-demo="minimal">
+                <div class="demo-thumb thumb-minimal"></div>
+                <span>Minimalist SaaS</span>
+              </button>
+              <button class="demo-btn" data-demo="cyber">
+                <div class="demo-thumb thumb-cyber"></div>
+                <span>Cyberpunk UI</span>
+              </button>
+              <button class="demo-btn" data-demo="organic">
+                <div class="demo-thumb thumb-organic"></div>
+                <span>Organic Brand</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Hidden canvas for color quantization -->
+        <canvas id="quantizer-canvas" class="hidden"></canvas>
+
+        <!-- Dynamic Palette Checker (Accessibility Widget) -->
+        <div id="palette-checker-widget" class="card panel-card margin-top hidden">
+          <div class="card-header border-accent">
+            <i data-lucide="shield-alert" class="header-icon-accent"></i>
+            <h2>Contrast & Accessibility</h2>
+          </div>
+          <div class="card-body">
+            <p class="widget-desc">Verifying contrast configurations for components based on WCAG 2.2 AA standards.</p>
+            <div id="contrast-rows" class="contrast-check-list">
+              <!-- Contrast checks populated dynamically -->
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- Right Column: Outputs & Prompt Customizer -->
+      <section class="output-panel">
+        
+        <!-- Welcome state (Shown by default) -->
+        <div id="output-welcome" class="card welcome-card">
+          <div class="welcome-graphics">
+            <i data-lucide="wand-2"></i>
+          </div>
+          <h2>Ready to Deconstruct</h2>
+          <p>Upload a design or click a demo preset to instantly extract the color palette, analyze typography systems, and output a design prompt.</p>
+        </div>
+
+        <!-- Loading State (Hidden by default) -->
+        <div id="output-loading" class="card loading-card hidden">
+          <div class="spinner-container">
+            <div class="premium-spinner"></div>
+          </div>
+          <h2>Quantizing Pixels & Analysing Layout...</h2>
+          <p id="loading-status">Running styling heuristic engines...</p>
+        </div>
+
+        <!-- Results View (Hidden by default) -->
+        <div id="output-results" class="results-container hidden">
+          
+          <!-- Style Summary -->
+          <div class="card result-card">
+            <div class="card-header border-accent">
+              <i data-lucide="eye" class="header-icon-accent"></i>
+              <h2>Style Summary</h2>
+            </div>
+            <div class="card-body">
+              <p id="style-summary-text" class="summary-body"></p>
+            </div>
+          </div>
+
+          <!-- Design Keywords -->
+          <div class="card result-card">
+            <div class="card-header border-accent">
+              <i data-lucide="tags" class="header-icon-accent"></i>
+              <h2>Design Keywords</h2>
+            </div>
+            <div class="card-body">
+              <div id="keywords-tags" class="tags-container">
+                <!-- Clickable tags populated by JS -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Key Elements Breakdown -->
+          <div class="card result-card">
+            <div class="card-header border-accent">
+              <i data-lucide="layers" class="header-icon-accent"></i>
+              <h2>Key Elements</h2>
+            </div>
+            <div class="card-body grid-elements">
+              
+              <!-- Colors -->
+              <div class="element-box">
+                <h4>Color Palette</h4>
+                <div id="color-palette-container" class="color-palette-grid">
+                  <!-- Color blocks populated by JS -->
+                </div>
+              </div>
+
+              <!-- Typography -->
+              <div class="element-box">
+                <h4>Typography Style</h4>
+                <p id="element-typography" class="element-desc"></p>
+              </div>
+
+              <!-- Layout/Composition -->
+              <div class="element-box">
+                <h4>Layout & Composition</h4>
+                <p id="element-layout" class="element-desc"></p>
+              </div>
+
+              <!-- Spacing -->
+              <div class="element-box">
+                <h4>Spacing & Geometry</h4>
+                <p id="element-spacing" class="element-desc"></p>
+              </div>
+
+              <!-- Key Details -->
+              <div class="element-box full-width">
+                <h4>Standout Details</h4>
+                <p id="element-details" class="element-desc"></p>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Ready-to-use Prompt & Customizer Widget -->
+          <div class="card result-card prompt-card">
+            <div class="card-header border-accent highlight-header">
+              <i data-lucide="terminal" class="header-icon-accent"></i>
+              <h2>Ready-to-Use AI Prompt</h2>
+              <button id="copy-prompt-btn" class="accent-btn">
+                <i data-lucide="copy"></i> Copy Prompt
+              </button>
+            </div>
+            <!-- Framer Toggling Segment Control Widget -->
+            <div class="prompt-header-controls">
+              <div class="framer-segment-control">
+                <div class="segment-pill" id="active-segment-pill"></div>
+                <button type="button" class="segment-btn active" data-format="midjourney">Midjourney v6</button>
+                <button type="button" class="segment-btn" data-format="dalle">DALL-E 3</button>
+                <button type="button" class="segment-btn" data-format="tailwind">SaaS Code</button>
+              </div>
+            </div>
+            <div class="card-body no-padding">
+              <pre class="prompt-pre"><code id="ready-prompt" class="language-prompt"></code></pre>
+            </div>
+            
+            <!-- Prompt Customizer (Fluid Widget) -->
+            <div class="prompt-customizer-widget">
+              <h4>Prompt Customizer Widget</h4>
+              <p class="customizer-desc">Select styles to dynamically append parameters to the AI prompt:</p>
+              <div class="customizer-chips">
+                <button class="chip-btn" data-modifier="glass">
+                  <i data-lucide="plus"></i> Glassmorphism
+                </button>
+                <button class="chip-btn" data-modifier="cyber">
+                  <i data-lucide="plus"></i> Neon Glow
+                </button>
+                <button class="chip-btn" data-modifier="minimal">
+                  <i data-lucide="plus"></i> Ultra Whitespace
+                </button>
+                <button class="chip-btn" data-modifier="3d">
+                  <i data-lucide="plus"></i> 3D Elements
+                </button>
+                <button class="chip-btn" data-modifier="handdrawn">
+                  <i data-lucide="plus"></i> Hand-drawn Detail
+                </button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </section>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="app-footer">
+    <p>© 2026 VisualPrompt Studio. All rights reserved.</p>
+  </footer>
+
+  <script src="app.js"></script>
+  <script>
+    // Initialize Lucide icons on load safely
+    if (typeof lucide !== 'undefined') {
+      lucide.createIcons();
+    }
+  </script>
+</body>
+</html>
